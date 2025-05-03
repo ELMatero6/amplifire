@@ -15,11 +15,13 @@ function makeDistortionCurve(amount) {
 }
 
 window.addEventListener('click', async () => {
-    if (!audioCtx || audioCtx.state === 'suspended') {
-      await init();
-    }
-  });
-  
+  if (!audioCtx || audioCtx.state === 'suspended') {
+    await init();
+    if (typeof setupKnobs === 'function') setupKnobs();
+    if (typeof setupRecorder === 'function') setupRecorder();
+    if (typeof startTuner === 'function') startTuner();
+  }
+});
 
 async function init() {
   if (!audioCtx) {
