@@ -1,8 +1,13 @@
-// controller.js
-window.addEventListener('DOMContentLoaded', async () => {
-  await init();               // from function.js
-  setupKnobs();               // from knobs-module.js
-  setupRecorder();            // from recorder-module.js
-  startTuner();               // from tuner-module.js
-  renderTuningDisplay();      // from tuning-logic.js
-});
+window.addEventListener('DOMContentLoaded', () => {
+    renderTuningDisplay();
+  });
+  
+  window.addEventListener('click', async () => {
+    if (!audioCtx || audioCtx.state === 'suspended') {
+      await init();
+      setupKnobs();
+      setupRecorder();
+      startTuner();
+    }
+  });
+  

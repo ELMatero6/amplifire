@@ -14,8 +14,21 @@ function makeDistortionCurve(amount) {
   return curve;
 }
 
+window.addEventListener('click', async () => {
+    if (!audioCtx || audioCtx.state === 'suspended') {
+      await init();
+    }
+  });
+  
+
 async function init() {
-  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  if (audioCtx.state === 'suspended') {
+    await audioCtx.resume();
+  }
+
   const stream = await navigator.mediaDevices.getUserMedia({
     audio: {
       echoCancellation: false,
@@ -45,7 +58,7 @@ async function init() {
   compressor.release.setValueAtTime(0.25, audioCtx.currentTime);
 
   distortionNode.curve = makeDistortionCurve(50);
-  distortionNode.oversample = '2x';
+  distortionNode.oversample = '4x';
 
   filterNode.type = 'lowpass';
   filterNode.frequency.value = 5000;
