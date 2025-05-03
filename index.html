@@ -1,0 +1,86 @@
+<!-- index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Amplifire🔥</title>
+  <link rel="stylesheet" href="style.css" />
+  
+</head>
+<body>
+  <header class="app-header">
+    <h1>Amplifire🔥 By Mater</h1>
+    <body>
+      <button onclick="startApp()">Start Amp</button>
+  </header>
+
+  <main class="main-layout">
+    <section class="module knobs-module">
+      <h2>Knobs</h2>
+      <div class="knob-container">
+        <div class="knob-wrapper">
+          <div class="value" id="volumeVal">100%</div>
+          <canvas id="volume" width="80" height="80"></canvas>
+          <div class="label">Volume</div>
+        </div>
+        <div class="knob-wrapper">
+          <div class="value" id="distortionVal">15%</div>
+          <canvas id="distortion" width="80" height="80"></canvas>
+          <div class="label">Distortion</div>
+        </div>
+        <div class="knob-wrapper">
+          <div class="value" id="toneVal">25%</div>
+          <canvas id="tone" width="80" height="80"></canvas>
+          <div class="label">Tone</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="module tuner-module">
+      <h2>Tuner</h2>
+      <div id="noteDisplay" class="note-display">Listening...</div>
+      <div id="tuneDirection" class="tune-direction"></div>
+      <div id="tunerPanel" style="display:none;">
+        <div id="noteDisplay">Listening...</div>
+        <div id="tuneDirection"></div>
+      </div>
+      
+      
+    </section>
+
+    <section class="module recorder-module">
+      <h2>Recorder</h2>
+      <button id="recordBtn">Start Recording</button>
+      <a id="downloadLink" style="display:none; margin-top:10px;">Download Recording</a>
+      <audio id="audioPlayer" controls style="display:none; margin-top:10px;"></audio>
+    </section>
+
+
+  <section class="module tuning-module">
+    <h2>Tuning Presets</h2>
+    <p style="font-size: 13px; color: #ccc; text-align: center; max-width: 300px;">These presets assume your guitar is currently tuned to Standard Tuning (E A D G B E).</p>
+    <div class="preset-buttons">
+      <button onclick="setTuning('standard')">Standard</button>
+      <button onclick="setTuning('dropD')">Drop D</button>
+      <button onclick="setTuning('openD')">Open D</button>
+      <button onclick="setTuning('openG')">Open G</button>
+      <button onclick="setTuning('openE')">Open E</button>
+      <button onclick="setTuning('dadgad')">DADGAD</button>
+    </div>
+    <ul id="tuningDisplay">
+      <!-- Will display notes per string dynamically -->
+    </ul>
+  </section>
+  
+  <script src="function.js"></script>
+  <script src="knobs-module.js"></script>
+  <script src="recorder-module.js"></script>
+  <script src="tuner-module.js"></script>
+  <script src="tuning-logic.js"></script>
+  <script src="controller.js"></script>
+  
+
+  
+</main>
+</body>
+</html>
