@@ -45,7 +45,7 @@ async function init() {
   compressor.release.setValueAtTime(0.25, audioCtx.currentTime);
 
   distortionNode.curve = makeDistortionCurve(50);
-  distortionNode.oversample = '4x';
+  distortionNode.oversample = '2x';
 
   filterNode.type = 'lowpass';
   filterNode.frequency.value = 5000;
