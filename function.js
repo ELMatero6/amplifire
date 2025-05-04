@@ -1,6 +1,7 @@
 // function.js
 
-let audioCtx, mic, preGain, compressor, distortionNode, filterNode, gainNode, dryGain, wetGain;
+let audioCtx, mic, preGain, compressor, distortionNode, gainNode, dryGain, wetGain;
+let bassEQ, midEQ, trebleEQ;
 
 function makeDistortionCurve(amount) {
   const n_samples = 44100;
@@ -45,10 +46,26 @@ async function init() {
   preGain = audioCtx.createGain();
   compressor = audioCtx.createDynamicsCompressor();
   distortionNode = audioCtx.createWaveShaper();
-  filterNode = audioCtx.createBiquadFilter();
   gainNode = audioCtx.createGain();
   dryGain = audioCtx.createGain();
   wetGain = audioCtx.createGain();
+
+  // EQ filters
+  bassEQ = audioCtx.createBiquadFilter();
+  bassEQ.type = 'lowshelf';
+  bassEQ.frequency.value = 100;
+  bassEQ.gain.value = 0;
+
+  midEQ = audioCtx.createBiquadFilter();
+  midEQ.type = 'peaking';
+  midEQ.frequency.value = 800;
+  midEQ.Q.value = 1;
+  midEQ.gain.value = 0;
+
+  trebleEQ = audioCtx.createBiquadFilter();
+  trebleEQ.type = 'highshelf';
+  trebleEQ.frequency.value = 3000;
+  trebleEQ.gain.value = 0;
 
   // Node configuration
   preGain.gain.value = 1.0;
@@ -62,33 +79,32 @@ async function init() {
   distortionNode.curve = makeDistortionCurve(50);
   distortionNode.oversample = '4x';
 
-  filterNode.type = 'lowpass';
-  filterNode.frequency.value = 5000;
-
   gainNode.gain.value = 1.0;
-  dryGain.gain.value = 0.5;
-  wetGain.gain.value = 0.5;
 
   // Routing
   mic.connect(preGain);
   preGain.connect(compressor);
 
-  // Dry path
-  compressor.connect(dryGain);
+  // Split
+  compressor.connect(dryGain);             // Clean path
+  compressor.connect(distortionNode);      // Overdrive path
+  distortionNode.connect(wetGain);
 
-  // Wet path
-  compressor.connect(distortionNode);
-  distortionNode.connect(filterNode);
-  filterNode.connect(wetGain);
-
-  // Mix
-  dryGain.connect(gainNode);
-  wetGain.connect(gainNode);
+  // Merge dry + wet → EQ → Output
+  dryGain.connect(bassEQ);
+  wetGain.connect(bassEQ);
+  bassEQ.connect(midEQ);
+  midEQ.connect(trebleEQ);
+  trebleEQ.connect(gainNode);
   gainNode.connect(audioCtx.destination);
+
+  // Start with clean only
+  dryGain.gain.value = 1.0;
+  wetGain.gain.value = 0.0;
 }
 
-function setDistortionBlend(amount) {
-  const wet = Math.min(Math.max(amount, 0), 1);
+function setOverdriveBlend(blend) {
+  const wet = Math.min(Math.max(blend, 0), 1);
   const dry = 1 - wet;
   if (wetGain && dryGain) {
     wetGain.gain.value = wet;

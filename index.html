@@ -1,38 +1,57 @@
-<!-- index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <title>Amplifire🔥</title>
   <link rel="stylesheet" href="style.css" />
-  
 </head>
 <body>
   <header class="app-header">
     <h1>Amplifire🔥 By Mater</h1>
-    <h2>click anywhere to start<</h2>
+    <h2>click anywhere to start</h2>
   </header>
 
   <main class="main-layout">
-    <section class="module knobs-module">
-      <h2>Knobs</h2>
-      <div class="knob-container">
+
+    <section class="module amp-controls">
+      <h2>Amp Controls</h2>
+
+      <div class="label">Clean & EQ</div>
+      <div class="knob-container" style="flex-wrap: wrap;">
         <div class="knob-wrapper">
-          <div class="value" id="volumeVal">100%</div>
-          <canvas id="volume" width="80" height="80"></canvas>
-          <div class="label">Volume</div>
+          <div class="value" id="cleanVolumeVal">0%</div>
+          <canvas id="cleanVolume" width="80" height="80"></canvas>
+          <div class="label">Clean Vol</div>
+        </div>
+
+        <div class="knob-wrapper">
+          <div class="value" id="bassVal">50%</div>
+          <canvas id="bass" width="80" height="80"></canvas>
+          <div class="label">Bass</div>
         </div>
         <div class="knob-wrapper">
-          <div class="value" id="distortionVal">15%</div>
-          <canvas id="distortion" width="80" height="80"></canvas>
-          <div class="label">Distortion</div>
+          <div class="value" id="midVal">50%</div>
+          <canvas id="mid" width="80" height="80"></canvas>
+          <div class="label">Mid</div>
         </div>
         <div class="knob-wrapper">
-          <div class="value" id="toneVal">25%</div>
-          <canvas id="tone" width="80" height="80"></canvas>
-          <div class="label">Tone</div>
+          <div class="value" id="trebleVal">50%</div>
+          <canvas id="treble" width="80" height="80"></canvas>
+          <div class="label">Treble</div>
         </div>
       </div>
+
+
+    <div class="section-label">Overdrive</div>
+        <div class="knob-wrapper">
+          <div class="value" id="overdriveGainVal">0%</div>
+          <canvas id="overdriveGain" width="80" height="80"></canvas>
+          <div class="label">Gain</div>
+        </div>
+      </div>
+
+
+      
     </section>
 
     <section class="module tuner-module">
@@ -43,8 +62,6 @@
         <div id="noteDisplay">Listening...</div>
         <div id="tuneDirection"></div>
       </div>
-      
-      
     </section>
 
     <section class="module recorder-module">
@@ -54,33 +71,26 @@
       <audio id="audioPlayer" controls style="display:none; margin-top:10px;"></audio>
     </section>
 
+    <section class="module tuning-module">
+      <h2>Tuning Presets - NOT IMPLEMENTED</h2>
+      <p style="font-size: 13px; color: #ccc; text-align: center; max-width: 300px;">These presets assume your guitar is currently tuned to Standard Tuning (E A D G B E).</p>
+      <div class="preset-buttons">
+        <button onclick="setTuning('standard')">Standard</button>
+        <button onclick="setTuning('dropD')">Drop D</button>
+        <button onclick="setTuning('openD')">Open D</button>
+        <button onclick="setTuning('openG')">Open G</button>
+        <button onclick="setTuning('openE')">Open E</button>
+        <button onclick="setTuning('dadgad')">DADGAD</button>
+      </div>
+      <ul id="tuningDisplay"></ul>
+    </section>
 
-  <section class="module tuning-module">
-    <h2>Tuning Presets - NOT IMPLEMENTED</h2>
-    <p style="font-size: 13px; color: #ccc; text-align: center; max-width: 300px;">These presets assume your guitar is currently tuned to Standard Tuning (E A D G B E).</p>
-    <div class="preset-buttons">
-      <button onclick="setTuning('standard')">Standard</button>
-      <button onclick="setTuning('dropD')">Drop D</button>
-      <button onclick="setTuning('openD')">Open D</button>
-      <button onclick="setTuning('openG')">Open G</button>
-      <button onclick="setTuning('openE')">Open E</button>
-      <button onclick="setTuning('dadgad')">DADGAD</button>
-    </div>
-    <ul id="tuningDisplay">
-      <!-- Will display notes per string dynamically -->
-    </ul>
-  </section>
-  
-  <script src="function.js"></script>
-  <script src="knobs-module.js"></script>
-  <script src="recorder-module.js"></script>
-  <script src="tuner-module.js"></script>
-  <script src="tuning-logic.js"></script>
-  <script src="controller.js"></script>
-  
-  
-
-  
-</main>
+    <script src="function.js"></script>
+    <script src="knobs-module.js"></script>
+    <script src="recorder-module.js"></script>
+    <script src="tuner-module.js"></script>
+    <script src="tuning-logic.js"></script>
+    <script src="controller.js"></script>
+  </main>
 </body>
 </html>
