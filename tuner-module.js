@@ -1,118 +1,102 @@
 // tuner-module.js
 
-let tunerAnalyser, tunerBuffer, isTunerRunning = false;
+let currentTuning = [];
+const tuningPresets = {
+  standard: ['E', 'A', 'D', 'G', 'B', 'E'],
+  dropD: ['D', 'A', 'D', 'G', 'B', 'E'],
+  openD: ['D', 'A', 'D', 'F#', 'A', 'D'],
+  openG: ['D', 'G', 'D', 'G', 'B', 'D'],
+  openE: ['E', 'B', 'E', 'G#', 'B', 'E'],
+  dadgad: ['D', 'A', 'D', 'G', 'A', 'D']
+};
+
+const noteToMidi = {
+  'C': 0, 'C#': 1, 'D': 2, 'D#': 3, 'E': 4, 'F': 5,
+  'F#': 6, 'G': 7, 'G#': 8, 'A': 9, 'A#': 10, 'B': 11
+};
+
+function noteNameToMidi(note) {
+  let octave = 4;
+  let name = note;
+  if (note.length > 1 && note[note.length - 1].match(/[0-9]/)) {
+    octave = parseInt(note[note.length - 1]);
+    name = note.slice(0, note.length - 1);
+  }
+  return 12 * (octave + 1) + noteToMidi[name.toUpperCase()];
+}
+
+function getStandardFreq(midi) {
+  return 440 * Math.pow(2, (midi - 69) / 12);
+}
+
+function setTuning(presetName) {
+  const preset = tuningPresets[presetName];
+  if (!preset) return;
+  currentTuning = preset.map((note, idx) => {
+    const defaultOctaves = [2, 2, 3, 3, 3, 4]; // E A D G B E
+    const midi = noteNameToMidi(note + defaultOctaves[idx]);
+    return { name: note, midi };
+  });
+  renderTuningDisplay();
+}
+
+function renderTuningDisplay() {
+  const ul = document.getElementById('tuningDisplay');
+  if (!ul) return;
+  ul.innerHTML = '';
+  currentTuning.forEach((item, i) => {
+    const li = document.createElement('li');
+    li.textContent = `String ${6 - i}: ${item.name}`;
+    ul.appendChild(li);
+  });
+}
 
 function startTuner() {
-  if (!audioCtx || !mic) return;
-
-  tunerAnalyser = audioCtx.createAnalyser();
-  tunerAnalyser.fftSize = 4096;
-  tunerAnalyser.minDecibels = -90;
-  tunerAnalyser.maxDecibels = -10;
-  tunerAnalyser.smoothingTimeConstant = 0.85;
-
-  tunerBuffer = new Float32Array(tunerAnalyser.fftSize);
-  mic.connect(tunerAnalyser);
-
-  isTunerRunning = true;
-  updateTuner();
-}
-// From 6th string (low E) to 1st string (high E)
-const tuningMIDINotes = {
-    E: 40,  // E2
-    A: 45,  // A2
-    D: 50,  // D3
-    G: 55,  // G3
-    B: 59,  // B3
-    'E2': 64 // E4 high E string (needs to be unique from low E)
-  };
-  
-function toggleTuner() {
-  const panel = document.getElementById("tunerPanel");
-  panel.style.display = panel.style.display === "none" ? "block" : "none";
-}
-
-function updateTuner() {
-    tunerAnalyser.getFloatTimeDomainData(tunerBuffer);
-    const ac = autoCorrelate(tunerBuffer, audioCtx.sampleRate);
-    const noteDisplay = document.getElementById('noteDisplay');
-    const tuneDirection = document.getElementById('tuneDirection');
-  
-    if (ac !== -1 && ac < 2000) {
-      const detectedMidi = getNote(ac);
-      const detectedName = noteStrings[detectedMidi % 12];
-  
-      noteDisplay.textContent = `${detectedName} (${ac.toFixed(1)} Hz)`;
-  
-      // Find the closest string note from the current tuning
-      let closestStringNote = null;
-      let smallestDiff = Infinity;
-  
-      currentTuning.forEach(note => {
-        const midi = tuningMIDINotes[note];
-        const freq = getStandardFreq(midi);
-        const diff = Math.abs(ac - freq);
-        if (diff < smallestDiff) {
-          smallestDiff = diff;
-          closestStringNote = { freq, name: note, midi };
-        }
-      });
-  
-      const diff = ac - closestStringNote.freq;
-  
-      if (Math.abs(diff) < 1.5) {
-        tuneDirection.textContent = `In Tune with ${closestStringNote.name}`;
-        tuneDirection.style.color = "lightgreen";
-      } else if (diff < 0) {
-        tuneDirection.textContent = `Tune Up ↑ (${closestStringNote.name})`;
-        tuneDirection.style.color = "#f39c12";
-      } else {
-        tuneDirection.textContent = `Tune Down ↓ (${closestStringNote.name})`;
-        tuneDirection.style.color = "#e74c3c";
-      }
-    } else {
-      noteDisplay.textContent = "Please Play A String";
-      tuneDirection.textContent = "";
-    }
-  
-    requestAnimationFrame(updateTuner);
+  const tuneDirection = document.getElementById('tuneDirection');
+  if (!audioCtx || !mic) {
+    setTimeout(startTuner, 500);
+    return;
   }
-  
-const noteStrings = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 
-function getNote(frequency) {
-  const noteNum = 12 * (Math.log(frequency / 440) / Math.log(2));
-  return Math.round(noteNum) + 69;
-}
+  const analyser = audioCtx.createAnalyser();
+  analyser.fftSize = 4096;
 
-function frequencyToNoteName(frequency) {
-  const note = getNote(frequency);
-  return noteStrings[note % 12];
-}
+  const highpass = audioCtx.createBiquadFilter();
+  highpass.type = 'highpass';
+  highpass.frequency.value = 100;
 
-function getStandardFreq(note) {
-  return 440 * Math.pow(2, (note - 69) / 12);
-}
+  const buffer = new Float32Array(analyser.fftSize);
+  mic.connect(highpass);
+  highpass.connect(analyser);
 
-function autoCorrelate(buf, sampleRate) {
+  function autoCorrelate(buf, sampleRate) {
     let SIZE = buf.length;
     let rms = 0;
-    for (let i = 0; i < SIZE; i++) rms += buf[i] * buf[i];
+    for (let i = 0; i < SIZE; i++) {
+      const val = buf[i];
+      rms += val * val;
+    }
     rms = Math.sqrt(rms / SIZE);
-    if (rms < 0.005) return -1;
-  
+    if (rms < 0.0015) return -1;
+
     let r1 = 0, r2 = SIZE - 1, thres = 0.2;
-    for (let i = 0; i < SIZE / 2; i++) if (Math.abs(buf[i]) < thres) { r1 = i; break; }
-    for (let i = 1; i < SIZE / 2; i++) if (Math.abs(buf[SIZE - i]) < thres) { r2 = SIZE - i; break; }
-  
+    for (let i = 0; i < SIZE / 2; i++) {
+      if (Math.abs(buf[i]) < thres) { r1 = i; break; }
+    }
+    for (let i = 1; i < SIZE / 2; i++) {
+      if (Math.abs(buf[SIZE - i]) < thres) { r2 = SIZE - i; break; }
+    }
+
     buf = buf.slice(r1, r2);
     SIZE = buf.length;
-  
-    let c = new Array(SIZE).fill(0);
+
+    const c = new Array(SIZE).fill(0);
     for (let i = 0; i < SIZE; i++) {
-      for (let j = 0; j < SIZE - i; j++) c[i] += buf[j] * buf[j + i];
+      for (let j = 0; j < SIZE - i; j++) {
+        c[i] = c[i] + buf[j] * buf[j + i];
+      }
     }
-  
+
     let d = 0;
     while (c[d] > c[d + 1]) d++;
     let maxval = -1, maxpos = -1;
@@ -122,7 +106,57 @@ function autoCorrelate(buf, sampleRate) {
         maxpos = i;
       }
     }
-  
-    return sampleRate / maxpos;
+
+    let T0 = maxpos;
+    const x1 = c[T0 - 1], x2 = c[T0], x3 = c[T0 + 1];
+    const a = (x1 + x3 - 2 * x2) / 2;
+    const b = (x3 - x1) / 2;
+    if (a) T0 = T0 - b / (2 * a);
+    return sampleRate / T0;
   }
-  
+
+  function detectPitch() {
+    analyser.getFloatTimeDomainData(buffer);
+    const ac = autoCorrelate(buffer, audioCtx.sampleRate);
+    if (ac === -1) {
+      tuneDirection.textContent = 'No signal';
+      tuneDirection.style.color = '#999';
+    } else {
+      let closest = null;
+      let minDiff = Infinity;
+      currentTuning.forEach(item => {
+        const freq = getStandardFreq(item.midi);
+        const diff = Math.abs(ac - freq);
+        if (diff < minDiff) {
+          minDiff = diff;
+          closest = { ...item, freq };
+        }
+      });
+
+      const diff = ac - closest.freq;
+      if (Math.abs(diff) < 1.5) {
+        tuneDirection.textContent = `In Tune with ${closest.name}`;
+        tuneDirection.style.color = 'lightgreen';
+      } else if (diff < 0) {
+        tuneDirection.textContent = `Tune Up ↑ (${closest.name})`;
+        tuneDirection.style.color = '#f39c12';
+      } else {
+        tuneDirection.textContent = `Tune Down ↓ (${closest.name})`;
+        tuneDirection.style.color = '#e74c3c';
+      }
+    }
+
+    requestAnimationFrame(detectPitch);
+  }
+
+  detectPitch();
+}
+
+// Initialize standard tuning on load
+window.addEventListener('DOMContentLoaded', () => {
+  setTuning('standard');
+});
+
+// Make functions accessible globally
+window.setTuning = setTuning;
+window.startTuner = startTuner;

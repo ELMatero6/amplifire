@@ -6,14 +6,14 @@ let bassEQ, midEQ, trebleEQ;
 function makeDistortionCurve(amount) {
   const n_samples = 44100;
   const curve = new Float32Array(n_samples);
+  const deg = Math.PI / 180;
   for (let i = 0; i < n_samples; ++i) {
     const x = (i * 2) / n_samples - 1;
-    curve[i] = x < 0
-      ? Math.tanh(x * amount)
-      : Math.tanh(x * amount * 0.6);
+    curve[i] = ((3 + amount) * x * 20 * deg) / (Math.PI + amount * Math.abs(x));
   }
   return curve;
 }
+
 
 window.addEventListener('click', async () => {
   if (!audioCtx || audioCtx.state === 'suspended') {
@@ -88,7 +88,27 @@ async function init() {
   // Split
   compressor.connect(dryGain);             // Clean path
   compressor.connect(distortionNode);      // Overdrive path
-  distortionNode.connect(wetGain);
+  // --- Cab Simulation Filter Stack (no .wav needed) ---
+  const cabLowCut = audioCtx.createBiquadFilter();
+  cabLowCut.type = 'highpass';
+  cabLowCut.frequency.value = 90; // remove mud
+
+  const cabMidDip = audioCtx.createBiquadFilter();
+  cabMidDip.type = 'peaking';
+  cabMidDip.frequency.value = 600;
+  cabMidDip.Q.value = 1.5;
+  cabMidDip.gain.value = -3; // slight scoop
+
+  const cabHighCut = audioCtx.createBiquadFilter();
+  cabHighCut.type = 'lowpass';
+  cabHighCut.frequency.value = 4500; // remove harsh fizz
+
+  // Re-route wet signal through fake cab
+  distortionNode.connect(cabLowCut);
+  cabLowCut.connect(cabMidDip);
+  cabMidDip.connect(cabHighCut);
+  cabHighCut.connect(wetGain);
+
 
   // Merge dry + wet → EQ → Output
   dryGain.connect(bassEQ);

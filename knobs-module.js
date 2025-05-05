@@ -14,15 +14,15 @@ function setupKnobs() {
     }
   });
 
-  createKnob(document.getElementById('bass'), -25, 25, 0, 'bassVal', '%', v => {
+  createKnob(document.getElementById('bass'), -15, 15, 0, 'bassVal', '%', v => {
     if (bassEQ) bassEQ.gain.value = v;
   });
 
-  createKnob(document.getElementById('mid'), -25, 25, 0, 'midVal', '%', v => {
+  createKnob(document.getElementById('mid'), -15, 15, 0, 'midVal', '%', v => {
     if (midEQ) midEQ.gain.value = v;
   });
 
-  createKnob(document.getElementById('treble'), -25, 25, 0, 'trebleVal', '%', v => {
+  createKnob(document.getElementById('treble'), -15, 15, 0, 'trebleVal', '%', v => {
     if (trebleEQ) trebleEQ.gain.value = v;
   });
 }
